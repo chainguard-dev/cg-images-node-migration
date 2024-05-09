@@ -1,0 +1,22 @@
+FROM cgr.dev/chainguard/node:latest-dev as builder
+
+ENV NODE_ENV production
+
+WORKDIR /usr/src/app
+
+# Consider changing this to use Package.lock and npm ci
+COPY package.json .
+RUN npm install
+
+USER node
+COPY . .
+
+FROM cgr.dev/chainguard/node:latest
+
+COPY --from=builder --chown=node:node /usr/src/app /app
+EXPOSE 3000
+ENV NODE_ENV=production
+ENV PATH=/app/node_modules/.bin:$PATH
+WORKDIR /app
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["node", "app.js"]
